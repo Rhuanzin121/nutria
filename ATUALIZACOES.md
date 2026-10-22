@@ -34,3 +34,9 @@ Os testes incluem regressão de digitação real de espaços, medidas caseiras n
 - Pesos médios estimados para alimentos TACO comuns; medidas de fontes ou informadas pelo usuário têm prioridade. Os pesos médios não são dados oficiais da TACO.
 - Wheys por produto/sabor/porção: Adaptogen Tasty doce de leite (34 g), Max Titanium 100% chocolate (30 g), Growth concentrado natural (30 g). Fontes comerciais identificadas para Adaptogen e Max; fonte oficial Growth. Fórmulas e rótulos podem variar.
 - Backups anteriores continuam importáveis; migração SQL 003 adiciona peso e alternativas, mantendo RLS e revisão de workspace.
+
+## Correção dos macros ausentes no resumo
+- Quando um alimento não informa proteínas, carboidratos ou gorduras, o resumo e os subtotais mostram a soma conhecida com sinal ≥ e identificação parcial.
+- A lista de dados ausentes identifica os alimentos de cada macro; ausência total aparece como Não informado.
+- g/kg também identifica valores parciais. Percentuais e comparação de metas não são apresentados como completos quando faltam dados. O cálculo canônico continua preservando valores desconhecidos.
+- 62 testes passaram, incluindo regressões de composição incompleta e ausência total.
