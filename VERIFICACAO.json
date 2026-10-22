@@ -1,0 +1,16 @@
+{
+  "resultado": "51 testes passaram; TypeScript e build de produção passaram",
+  "catalogo": {
+    "TACO": 597,
+    "USDA_Foundation": 363,
+    "composicoes_calculadas": 1,
+    "TBCA": "importação de arquivo autorizado; base não incluída"
+  },
+  "banco": "Migrações 001 e 002 executadas em PostgreSQL embarcado (PGlite); RLS testada com dois usuários artificiais",
+  "interface": "Regressões de espaços e medidas caseiras verificadas com Testing Library; busca de vegetais variados e campos novos conferidos no navegador; horários e medidas validados nas projeções SQL",
+  "pendencias": [
+    "Configurar projeto Supabase remoto, aplicar migração e preencher .env.local para sincronização entre dispositivos",
+    "Validar Supabase Auth remoto com e-mail e credenciais próprias"
+  ],
+  "aviso_build": "Chunk de catálogo com catálogo com registros reais e medidas; build concluído; build concluído."
+}
