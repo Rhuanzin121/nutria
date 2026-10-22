@@ -13,7 +13,7 @@ npm ci
 npm run dev
 ```
 
-Abra o endereço impresso pelo Vite, normalmente `http://127.0.0.1:5173`. Não abra `index.html` diretamente pelo explorador de arquivos.
+Abra o endereço impresso pelo Vite, normalmente `http://127.0.0.1:5173`.
 
 ```powershell
 npm test
