@@ -1,3 +1,4 @@
+import { supplements } from "./supplements";
 import taco from "./taco.json";
 import usda from "./usda.json";
 import {
@@ -137,6 +138,7 @@ export function catalog(state: AppState) {
     ...state.recipes.map(recipeFood),
     ...officialFoods,
     ...supplementalFoods,
+    ...supplements,
     mixedVegetables,
   ];
 }

@@ -59,6 +59,11 @@ export const itemSchema = z.object({
   grams: z.number().finite().positive().max(10000),
   measure: measureSchema.optional(),
 });
+export const alternativeSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1).max(80),
+  items: z.array(itemSchema).max(300),
+});
 export const mealSchema = z.object({
   id: z.string(),
   name: z.string().trim().min(1).max(80),
@@ -67,12 +72,19 @@ export const mealSchema = z.object({
     .regex(/^$|^(?:[01]\d|2[0-3]):[0-5]\d$/)
     .default(""),
   items: z.array(itemSchema).max(300),
+  alternatives: z.array(alternativeSchema).max(20).default([]),
+  activeAlternativeId: z.string().nullable().default(null),
+}).superRefine((meal, ctx) => {
+  if (new Set(meal.alternatives.map(a => a.id)).size !== meal.alternatives.length ||
+      (meal.activeAlternativeId !== null && !meal.alternatives.some(a => a.id === meal.activeAlternativeId)))
+    ctx.addIssue({code: "custom", message: "Opção de refeição inválida."});
 });
 export const dietSchema = z.object({
   id: z.string(),
   name: z.string().trim().min(1).max(80),
   notes: z.string().max(2000),
   goals: totalsSchema,
+  bodyWeightKg: z.number().finite().positive().max(600).nullable().default(null),
   meals: z.array(mealSchema).max(50),
   updatedAt: z.string().datetime(),
 });
@@ -157,25 +169,42 @@ export function sumItems(items: Item[]): Totals {
     }),
   ) as Totals;
 }
-export const calculateDiet = (diet: Diet) =>
-  sumItems(diet.meals.flatMap((meal) => meal.items));
+export const activeMealItems = (meal: Meal): Item[] =>
+  meal.alternatives.find(a => a.id === meal.activeAlternativeId)?.items ?? meal.items;
+export const dietItems = (diet: Diet) => diet.meals.flatMap(activeMealItems);
+export const calculateDiet = (diet: Diet) => sumItems(dietItems(diet));
+export function updateMealItems(meal: Meal, items: Item[]): Meal {
+  return meal.activeAlternativeId === null ? {...meal, items} : {
+    ...meal, alternatives: meal.alternatives.map(a => a.id === meal.activeAlternativeId ? {...a, items} : a),
+  };
+}
+export function macrosPerKg(totals: Totals, kg: number | null) {
+  if (kg === null || !Number.isFinite(kg) || kg <= 0) return null;
+  return Object.fromEntries((["protein", "carbs", "fat"] as const).map(key =>
+    [key, totals[key] === null ? null : totals[key] / kg])) as Pick<Totals, "protein" | "carbs" | "fat">;
+}
 export function newDiet(name = "Nova dieta"): Diet {
   return {
     id: crypto.randomUUID(),
     name,
     notes: "",
     goals: unsetTotals(),
+    bodyWeightKg: null,
     meals: ["Café da manhã", "Almoço", "Lanche da tarde", "Jantar"].map(
-      (name) => ({ id: crypto.randomUUID(), name, time: "", items: [] }),
+      (name) => ({ id: crypto.randomUUID(), name, time: "", items: [], alternatives: [], activeAlternativeId: null }),
     ),
     updatedAt: new Date().toISOString(),
   };
 }
 export function duplicateMeal(meal: Meal): Meal {
+  const alternatives = meal.alternatives.map(a => ({...structuredClone(a), id: crypto.randomUUID(),
+    items: a.items.map(i => ({...structuredClone(i), id: crypto.randomUUID()}))}));
   return {
     ...structuredClone(meal),
     id: crypto.randomUUID(),
     name: `${meal.name.slice(0, 70)} (cópia)`,
+    alternatives,
+    activeAlternativeId: meal.activeAlternativeId === null ? null : alternatives[meal.alternatives.findIndex(a => a.id === meal.activeAlternativeId)]?.id ?? null,
     items: meal.items.map((item) => ({
       ...structuredClone(item),
       id: crypto.randomUUID(),

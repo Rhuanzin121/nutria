@@ -2,6 +2,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import migration from "../supabase/migrations/202610210001_initial.sql?raw";
 import migration2 from "../supabase/migrations/202610210002_meal_time_measures.sql?raw";
+import migration3 from "../supabase/migrations/202610220003_meal_alternatives_weight.sql?raw";
 import { newDiet, foodSchema, emptyTotals, type AppState } from "./model";
 // Disposable, artificial users. PostgreSQL auth.uid() is stubbed; Supabase Auth itself is not emulated.
 const A = "11111111-1111-4111-8111-111111111111";
@@ -19,6 +20,7 @@ beforeAll(async () => {
   );
   await db.exec(migration);
   await db.exec(migration2);
+  await db.exec(migration3);
 }, 30000);
 afterAll(async () => {
   await db.close();
@@ -28,6 +30,9 @@ describe("PostgreSQL: persistência e isolamento real por RLS", () => {
     await asUser(A);
     const d = newDiet("Fixture SQL A");
     d.goals.kcal = 2000;
+    d.bodyWeightKg = 80;
+    d.meals[0].alternatives = [{id:"sql-alt",name:"Substituição",items:[]}];
+    d.meals[0].activeAlternativeId = "sql-alt";
     d.meals[0].time = "07:30";
     const food = foodSchema.parse({
       id: "sql-fixture",
@@ -70,6 +75,10 @@ describe("PostgreSQL: persistência e isolamento real por RLS", () => {
       [A, JSON.stringify(state)],
     );
     expect((await db.query("select * from public.diets")).rows).toHaveLength(1);
+    expect((await db.query<{body_weight_kg:string}>("select body_weight_kg from public.diets")).rows[0].body_weight_kg).toBe("80");
+    const projectedMeal = (await db.query<{alternatives: unknown[];active_alternative_id:string}>("select alternatives,active_alternative_id from public.meals where position=0")).rows[0];
+    expect(projectedMeal.alternatives).toEqual(d.meals[0].alternatives);
+    expect(projectedMeal.active_alternative_id).toBe("sql-alt");
     expect((await db.query("select * from public.meals")).rows).toHaveLength(4);
     expect(
       (

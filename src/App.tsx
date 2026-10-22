@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import {
   calculateDiet,
+  activeMealItems, dietItems, updateMealItems,
   duplicateDiet,
   duplicateMeal,
   newDiet,
@@ -29,6 +30,7 @@ import {
   type Recipe,
 } from "./model";
 import { catalog } from "./foods";
+import { exportDietPdf } from "./pdf";
 import { exportState, loadState, saveState } from "./storage";
 import { pushCloud, supabase } from "./cloud";
 import { Dialog } from "./components/Dialog";
@@ -180,9 +182,9 @@ export default function App() {
           ? meal
           : {
               ...meal,
-              items: picker.replaceId
-                ? meal.items.map((i) => (i.id === picker.replaceId ? item : i))
-                : [...meal.items, item],
+              ...updateMealItems(meal, picker.replaceId
+                ? activeMealItems(meal).map((i) => (i.id === picker.replaceId ? item : i))
+                : [...activeMealItems(meal), item]),
             },
       ),
     });
@@ -214,7 +216,7 @@ export default function App() {
       );
     }
   }
-  const activeCount = diet?.meals.reduce((n, m) => n + m.items.length, 0) ?? 0;
+  const activeCount = diet ? dietItems(diet).length : 0;
   return (
     <div className="app">
       <header className="topbar">
@@ -403,6 +405,8 @@ export default function App() {
                   <p>Organize suas refeições. Confira cada nutriente.</p>
                 </div>
                 <div className="heading-actions">
+                  <button className="secondary" onClick={() => { try { exportDietPdf(diet); } catch { setError("Não foi possível gerar o PDF. Tente novamente."); } }}><Download size={16} />Exportar PDF</button>
+                  <button className="secondary" onClick={() => exportState({...state, diets: [diet], selectedId: diet.id}, false)}>Baixar dieta (JSON)</button>
                   <button
                     className="primary"
                     onClick={() => {
@@ -504,7 +508,7 @@ export default function App() {
                             id: crypto.randomUUID(),
                             name: `Refeição ${diet.meals.length + 1}`,
                             time: "",
-                            items: [],
+                            items: [], alternatives: [], activeAlternativeId: null,
                           },
                         ],
                       })
@@ -542,7 +546,9 @@ export default function App() {
                   </div>
                 </div>
                 <Summary
-                  items={diet.meals.flatMap((meal) => meal.items)}
+                  items={dietItems(diet)}
+                  bodyWeightKg={diet.bodyWeightKg}
+                  onWeight={(bodyWeightKg) => updateDiet({...diet, bodyWeightKg})}
                   totals={calculateDiet(diet)}
                   goals={diet.goals}
                   onGoals={() => setModal("goals")}
