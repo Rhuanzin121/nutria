@@ -13,7 +13,7 @@ npm ci
 npm run dev
 ```
 
-Abra o endereço impresso pelo Vite, normalmente `http://127.0.0.1:5173`.
+Abra o endereço impresso pelo Vite, normalmente `http://127.0.0.1:5173`. Não abra `index.html` diretamente pelo explorador de arquivos.
 
 ```powershell
 npm test
@@ -158,3 +158,6 @@ supabase/migrations/         esquema, restrições, triggers e RLS
 ```
 
 O build pode emitir aviso de tamanho para o chunk do catálogo nutricional: ele contém os registros reais para consulta offline de rede após carregar a página. O payload do catálogo é fortemente compressível; a divisão mantém dados, Supabase e bibliotecas separados. Não há service worker: abrir pela primeira vez ainda exige o servidor local ou hospedagem acessível.
+
+## Substituições e exportação
+Use **Adicionar substituição** em cada refeição e escolha a opção calculada no seletor. O total inclui apenas a opção selecionada. Informe o peso em kg no resumo para ver macros em g/kg. **Exportar PDF** e **Baixar dieta (JSON)** usam o nome atual da dieta; o backup completo possui sufixo `backup`. O PDF é gerado localmente, sem serviço externo. Consulte `ROTULOS.md` para os suplementos e suas porções.

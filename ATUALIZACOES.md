@@ -24,3 +24,13 @@ npm run dev
 ```
 
 Os testes incluem regressão de digitação real de espaços, medidas caseiras na interface, conversão de porções, percentuais 40/40/20, fibras incompletas, mistura calculada, compatibilidade de backups e execução das duas migrações em PostgreSQL embarcado. Credenciais Supabase remotas continuam necessárias para validar sincronização em sua instância.
+
+## 22/10/2026 - Substituições, PDF e peso corporal
+
+- Cada refeição conserva uma principal e até 20 substituições editáveis. Só a opção selecionada é calculada; a comparação mostra diferenças sem presumir equivalência.
+- Peso corporal opcional por dieta; proteínas, carboidratos e gorduras em g/kg.
+- Exportar PDF baixa um PDF A4 real, paginado, com refeições, horários, quantidades, fontes, metas, g/kg, anotações e opções fora do total identificadas. Não envia dados para um servidor.
+- Nome atual da dieta nos arquivos PDF e JSON; backup completo permanece identificado com sufixo backup. Arquivos já baixados não são renomeados.
+- Pesos médios estimados para alimentos TACO comuns; medidas de fontes ou informadas pelo usuário têm prioridade. Os pesos médios não são dados oficiais da TACO.
+- Wheys por produto/sabor/porção: Adaptogen Tasty doce de leite (34 g), Max Titanium 100% chocolate (30 g), Growth concentrado natural (30 g). Fontes comerciais identificadas para Adaptogen e Max; fonte oficial Growth. Fórmulas e rótulos podem variar.
+- Backups anteriores continuam importáveis; migração SQL 003 adiciona peso e alternativas, mantendo RLS e revisão de workspace.

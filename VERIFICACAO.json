@@ -1,5 +1,5 @@
 {
-  "resultado": "51 testes passaram; TypeScript e build de produção passaram",
+  "resultado": "60 testes passaram; TypeScript e build de produção passaram",
   "catalogo": {
     "TACO": 597,
     "USDA_Foundation": 363,
@@ -12,5 +12,7 @@
     "Configurar projeto Supabase remoto, aplicar migração e preencher .env.local para sincronização entre dispositivos",
     "Validar Supabase Auth remoto com e-mail e credenciais próprias"
   ],
-  "aviso_build": "Chunk de catálogo com catálogo com registros reais e medidas; build concluído; build concluído."
+  "aviso_build": "Chunk de catálogo com catálogo com registros reais e medidas; build concluído; build concluído.",
+  "atualizacao": "22/10/2026: alternativas, g/kg, arquivos com nome da dieta, PDF A4 paginado e 3 wheys com fontes",
+  "pdf": "Amostra sintética de 5 páginas renderizada com Poppler; acentos e quebras conferidos"
 }
