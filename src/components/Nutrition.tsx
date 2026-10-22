@@ -1,5 +1,5 @@
 import {
-  format,
+  format, macrosPerKg,
   goalDifference,
   macroDistribution,
   nutrientCoverage,
@@ -7,6 +7,7 @@ import {
   type Nutrient,
   type Item,
 } from "../model";
+import { NumberInput } from "./NumberInput";
 export const labels: Record<Nutrient, string> = {
   kcal: "Calorias",
   protein: "Proteínas",
@@ -51,13 +52,16 @@ export function Summary({
   totals,
   goals,
   onGoals,
-  items,
+  items, bodyWeightKg = null, onWeight,
 }: {
   totals: Totals;
+  bodyWeightKg?: number | null;
+  onWeight?: (kg: number | null) => void;
   goals: Totals;
   onGoals: () => void;
   items: Item[];
 }) {
+  const perKg = macrosPerKg(totals, bodyWeightKg);
   const distribution = macroDistribution(totals);
   const fiber = nutrientCoverage(items, "fiber");
   return (
@@ -84,6 +88,11 @@ export function Summary({
           </div>
         ))}
       </div>
+      <section className="per-kg" aria-label="Macros por peso corporal">
+        <h3>Macros por kg de peso corporal</h3>
+        <label>Peso corporal (kg)<NumberInput label="Peso corporal em kg" value={bodyWeightKg} nullable min={0.001} max={600} onCommit={n => { if (n === null || n > 0) onWeight?.(n); }} /></label>
+        {perKg ? <div className="distribution-values">{(["protein", "carbs", "fat"] as const).map(key => <div key={key}><b>{format(perKg[key], 2)} g/kg</b><span>{labels[key]}</span></div>)}</div> : <p>Informe seu peso para dividir os gramas de cada macro pelo peso em kg.</p>}
+      </section>
       <section
         className="macro-distribution"
         aria-label="Distribuição energética dos macronutrientes"

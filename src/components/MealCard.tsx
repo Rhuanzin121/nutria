@@ -6,9 +6,10 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import { calculateItem, sumItems, type Meal, type Item } from "../model";
+import { activeMealItems, updateMealItems, calculateItem, sumItems, type Meal, type Item } from "../model";
 import { MacroLine } from "./Nutrition";
 import { EditableName } from "./EditableName";
+import { MealAlternatives } from "./MealAlternatives";
 import { QuantityEditor } from "./QuantityEditor";
 export function MealCard({
   meal,
@@ -33,6 +34,7 @@ export function MealCard({
   onMove: (delta: number) => void;
   onSource: (item: Item) => void;
 }) {
+  const items = activeMealItems(meal);
   return (
     <section className="meal-card">
       <div className="meal-heading">
@@ -91,9 +93,10 @@ export function MealCard({
           </button>
         </div>
       </div>
-      {meal.items.length > 0 ? (
+      <MealAlternatives meal={meal} onChange={onChange} />
+      {items.length > 0 ? (
         <div className="item-list">
-          {meal.items.map((item) => (
+          {items.map((item) => (
             <div className="food-row" key={item.id}>
               <div className="food-name">
                 <button onClick={() => onSource(item)}>{item.food.name}</button>
@@ -108,12 +111,8 @@ export function MealCard({
                 quantity={item.grams}
                 measure={item.measure}
                 onChange={(grams, measure) =>
-                  onChange({
-                    ...meal,
-                    items: meal.items.map((i) =>
-                      i.id === item.id ? { ...i, grams, measure } : i,
-                    ),
-                  })
+                  onChange(updateMealItems(meal, items.map((i) =>
+                      i.id === item.id ? { ...i, grams, measure } : i)))
                 }
               />
               <MacroLine totals={calculateItem(item)} />
@@ -131,10 +130,7 @@ export function MealCard({
                   title="Remover alimento"
                   aria-label={`Remover ${item.food.name}`}
                   onClick={() =>
-                    onChange({
-                      ...meal,
-                      items: meal.items.filter((i) => i.id !== item.id),
-                    })
+                    onChange(updateMealItems(meal, items.filter((i) => i.id !== item.id)))
                   }
                 >
                   <Trash2 size={14} />
@@ -154,7 +150,7 @@ export function MealCard({
         </button>
         <div className="subtotal">
           <span>Subtotal</span>
-          <MacroLine totals={sumItems(meal.items)} items={meal.items} />
+          <MacroLine totals={sumItems(items)} items={items} />
         </div>
       </div>
     </section>

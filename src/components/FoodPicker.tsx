@@ -39,6 +39,8 @@ export function FoodPicker({
               ? f.id.startsWith("taco:")
               : source === "usda"
                 ? f.id.startsWith("usda:")
+                : source === "labels"
+                  ? f.id.startsWith("label:")
                 : source === "recipes"
                   ? f.id.startsWith("recipe:")
                   : f.manual || f.id.startsWith("composite:")),
@@ -98,6 +100,7 @@ export function FoodPicker({
           <option value="">Todas as fontes</option>
           <option value="taco">TACO · Brasil</option>
           <option value="usda">USDA · complemento</option>
+          <option value="labels">Rótulos · suplementos e marcas</option>
           <option value="recipes">Minhas receitas</option>
           <option value="personal">Pessoais e composições</option>
         </select>
@@ -112,6 +115,7 @@ export function FoodPicker({
           "Frango grelhado",
           "Ovo cozido",
           "Vegetais variados",
+          "Whey",
         ].map((suggestion) => (
           <button
             key={suggestion}
@@ -134,7 +138,7 @@ export function FoodPicker({
             key={food.id}
             onClick={() => {
               setSelected(food);
-              setAmount(food.unit === "porção" ? 1 : 100);
+              setAmount(food.unit === "porção" ? 1 : food.id.startsWith("label:") ? food.referenceAmount : 100);
               setMeasure(undefined);
             }}
           >

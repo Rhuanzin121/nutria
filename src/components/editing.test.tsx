@@ -168,3 +168,18 @@ describe("Regressões da interface", () => {
     expect(screen.getByText("20%")).toBeTruthy();
   });
 });
+
+function AlternativesHarness() {
+  const [meal,setMeal] = useState({...newDiet().meals[0], items:[{id:'main',food:foodSchema.parse({id:'x',name:'Principal',category:'Testes',source:'Teste',sourceUrl:'',page:null,unit:'g',referenceAmount:100,per100:emptyTotals()}),grams:50}]});
+  return <MealCard meal={meal} index={0} count={1} onChange={setMeal} onAdd={()=>{}} onReplace={()=>{}} onRemove={()=>{}} onDuplicate={()=>{}} onMove={()=>{}} onSource={()=>{}}/>;
+}
+it('cria substituição vazia, permite renomear e recupera alimentos da principal',async()=>{
+  const user=userEvent.setup();render(<AlternativesHarness/>);
+  await user.click(screen.getByRole('button',{name:'Adicionar substituição'}));
+  expect(screen.queryByRole('button',{name:/^Principal$/})).toBeNull();
+  const name=screen.getByLabelText('Nome da substituição de Café da manhã');
+  await user.clear(name);await user.type(name,'Alternativa com ovos');await user.tab();
+  expect(screen.getByRole('option',{name:'Alternativa com ovos'})).toBeTruthy();
+  await user.selectOptions(screen.getByLabelText('Opção de Café da manhã'),'main');
+  expect(screen.getByRole('button',{name:/^Principal$/})).toBeTruthy();
+});

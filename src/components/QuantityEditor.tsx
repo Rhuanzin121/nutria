@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { format, measureQuantity, type Food, type Measure } from "../model";
+import { householdMeasures } from "../household";
 import { NumberInput } from "./NumberInput";
 export function QuantityEditor({
   food,
@@ -22,7 +23,7 @@ export function QuantityEditor({
     setCustom(false);
     setMessage("");
   }, [food.id]);
-  const measures = [...food.measures];
+  const measures = [...householdMeasures(food)];
   if (
     measure &&
     !measures.some(
@@ -74,7 +75,7 @@ export function QuantityEditor({
           <option value="base">{food.unit}</option>
           {measures.map((m, index) => (
             <option key={index} value={index}>
-              {m.name}
+              {m.name} ({format(m.amount)} {food.unit})
             </option>
           ))}
           {food.unit !== "porção" && (

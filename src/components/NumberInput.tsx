@@ -5,12 +5,14 @@ export function NumberInput({
   label,
   nullable = false,
   max = 1000000,
+  min = 0,
 }: {
   value: number | null;
   onCommit: (n: number | null) => void;
   label: string;
   nullable?: boolean;
   max?: number;
+  min?: number;
 }) {
   const [raw, setRaw] = useState(
     value === null ? "" : String(value).replace(".", ","),
@@ -41,7 +43,7 @@ export function NumberInput({
           const valid =
             !!next.trim() &&
             Number.isFinite(n) &&
-            n >= 0 &&
+            n >= min &&
             n <= max &&
             (nullable || n > 0);
           setInvalid(!valid);
@@ -56,7 +58,7 @@ export function NumberInput({
       />
       {invalid && (
         <small role="alert">
-          {nullable ? "Use 0 ou mais." : "Use um valor maior que 0."}
+          {min > 0 ? `Use um valor entre ${min} e ${max}.` : nullable ? "Use 0 ou mais." : "Use um valor maior que 0."}
         </small>
       )}
     </div>
