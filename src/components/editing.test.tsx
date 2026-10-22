@@ -8,7 +8,7 @@ import { QuantityEditor } from "./QuantityEditor";
 import { MealCard } from "./MealCard";
 import { Summary } from "./Nutrition";
 import {
-  newDiet,
+  newDiet, sumItems,
   emptyTotals,
   foodSchema,
   type Item,
@@ -182,4 +182,28 @@ it('cria substituição vazia, permite renomear e recupera alimentos da principa
   expect(screen.getByRole('option',{name:'Alternativa com ovos'})).toBeTruthy();
   await user.selectOptions(screen.getByLabelText('Opção de Café da manhã'),'main');
   expect(screen.getByRole('button',{name:/^Principal$/})).toBeTruthy();
+});
+
+it('mostra proteínas e carboidratos conhecidos quando outro alimento não informa macros',()=>{
+  const known=foodSchema.parse({id:'known-macros',name:'Alimento com dados',category:'Teste',source:'Fixture',sourceUrl:'',page:null,unit:'g',referenceAmount:100,per100:{...emptyTotals(),protein:30,carbs:50,fat:10}});
+  const missing={...known,id:'missing-macros',name:'Alimento sem macros',per100:{...known.per100,protein:null,carbs:null}};
+  const items=[{id:'known',food:known,grams:100},{id:'missing',food:missing,grams:100}];
+  const totals=sumItems(items);
+  expect(totals.protein).toBeNull();expect(totals.carbs).toBeNull();
+  render(<Summary totals={totals} items={items} goals={emptyTotals()} bodyWeightKg={80} onGoals={()=>{}}/>);
+  expect(screen.getByLabelText('Total de Proteínas').textContent).toContain('≥ 30');
+  expect(screen.getByLabelText('Total de Carboidratos').textContent).toContain('≥ 50');
+  expect(screen.getByLabelText('Total de Gorduras').textContent).toContain('20');
+  expect(screen.getByLabelText('Total de Gorduras').textContent).not.toContain('parcial');
+  expect(screen.getAllByText('Alimento sem macros')).toHaveLength(2);
+  expect(screen.getByText('≥ 0,38 g/kg')).toBeTruthy();
+  expect(screen.getByText('≥ 0,63 g/kg')).toBeTruthy();
+});
+it('distingue ausência total de informação de um zero conhecido',()=>{
+  const food=foodSchema.parse({id:'all-missing',name:'Sem informação',category:'Teste',source:'Fixture',sourceUrl:'',page:null,unit:'g',referenceAmount:100,per100:{...emptyTotals(),protein:null,carbs:null}});
+  const items=[{id:'x',food,grams:100}];
+  render(<Summary totals={sumItems(items)} items={items} goals={emptyTotals()} onGoals={()=>{}}/>);
+  expect(screen.getByLabelText('Total de Proteínas').textContent).toContain('Não informado');
+  expect(screen.getByLabelText('Total de Carboidratos').textContent).toContain('Não informado');
+  expect(screen.getByLabelText('Total de Gorduras').textContent).toContain('0');
 });

@@ -19,6 +19,13 @@ export const labels: Record<Nutrient, string> = {
 };
 export const unit = (key: Nutrient) =>
   key === "kcal" ? "kcal" : key === "sodium" ? "mg" : "g";
+export function nutrientDisplay(totals: Totals, key: Nutrient, items?: Item[], divisor = 1) {
+  if (totals[key] !== null) return {value: format(totals[key] / divisor, divisor === 1 ? key === "kcal" ? 0 : 1 : 2), partial: false};
+  if (!items) return {value: "—", partial: false};
+  const coverage = nutrientCoverage(items, key);
+  if (coverage.total === coverage.missing) return {value: "Não informado", partial: true};
+  return {value: `≥ ${format(coverage.known / divisor, divisor === 1 ? key === "kcal" ? 0 : 1 : 2)}`, partial: true};
+}
 export function MacroLine({
   totals,
   items,
@@ -26,25 +33,20 @@ export function MacroLine({
   totals: Totals;
   items?: Item[];
 }) {
-  const fiber = items ? nutrientCoverage(items, "fiber") : null;
   return (
     <div className="macro-line">
-      {(["kcal", "protein", "carbs", "fat", "fiber"] as const).map((key) => (
+      {(["kcal", "protein", "carbs", "fat", "fiber"] as const).map((key) => {
+        const display = nutrientDisplay(totals, key, items);
+        return (
         <span key={key} title={labels[key]}>
-          <b>
-            {key === "fiber" && totals.fiber === null && fiber
-              ? `≥ ${format(fiber.known)}`
-              : format(totals[key], key === "kcal" ? 0 : 1)}
-          </b>{" "}
+          <b>{display.value === "Não informado" ? "—" : display.value}</b>{" "}
           {unit(key)}
           <small>
             {labels[key]}
-            {key === "fiber" && totals.fiber === null && fiber
-              ? " (parcial)"
-              : ""}
+            {display.partial ? " (parcial)" : ""}
           </small>
         </span>
-      ))}
+      );})}
     </div>
   );
 }
@@ -64,6 +66,7 @@ export function Summary({
   const perKg = macrosPerKg(totals, bodyWeightKg);
   const distribution = macroDistribution(totals);
   const fiber = nutrientCoverage(items, "fiber");
+  const missingMacros = (["protein", "carbs", "fat"] as const).filter(key => totals[key] === null);
   return (
     <aside className="summary">
       <div className="summary-title">
@@ -73,25 +76,32 @@ export function Summary({
       <div className="energy">
         <span>VALOR ENERGÉTICO TOTAL</span>
         <div>
-          {format(totals.kcal, 0)} <small>kcal</small>
+          {nutrientDisplay(totals, "kcal", items).value} <small>{nutrientDisplay(totals, "kcal", items).value === "Não informado" ? "" : "kcal"}</small>
         </div>
-        <p>Calculado a partir das suas refeições</p>
+        <p>{totals.kcal === null ? "Subtotal parcial dos alimentos com calorias informadas" : "Calculado a partir das suas refeições"}</p>
       </div>
-      <div className="summary-macros">
-        {(["protein", "carbs", "fat"] as const).map((key) => (
-          <div key={key}>
+      <div className="summary-macros" role="region" aria-label="Macronutrientes da dieta">
+        {(["protein", "carbs", "fat"] as const).map((key) => {
+          const display = nutrientDisplay(totals, key, items);
+          return (<div key={key} aria-label={`Total de ${labels[key]}`}>
             <i className={key} />
             <span>{labels[key]}</span>
             <b>
-              {format(totals[key])} <small>g</small>
+              {display.value} <small>{display.value === "Não informado" ? "" : "g"}{display.partial ? " · parcial" : ""}</small>
             </b>
           </div>
-        ))}
+        );})}
       </div>
+      {missingMacros.length > 0 && <section className="missing-macros" aria-label="Macros com dados ausentes">
+        <p>Totais parciais: “≥” mostra a soma dos valores conhecidos. Os alimentos sem informação não foram tratados como zero.</p>
+        <details><summary>Ver alimentos sem dados de macros</summary>
+          {missingMacros.map(key => <div key={key}><b>{labels[key]}</b><ul>{items.filter(item => item.food.per100[key] === null).map(item => <li key={item.id}>{item.food.name}</li>)}</ul></div>)}
+        </details>
+      </section>}
       <section className="per-kg" aria-label="Macros por peso corporal">
         <h3>Macros por kg de peso corporal</h3>
         <label>Peso corporal (kg)<NumberInput label="Peso corporal em kg" value={bodyWeightKg} nullable min={0.001} max={600} onCommit={n => { if (n === null || n > 0) onWeight?.(n); }} /></label>
-        {perKg ? <div className="distribution-values">{(["protein", "carbs", "fat"] as const).map(key => <div key={key}><b>{format(perKg[key], 2)} g/kg</b><span>{labels[key]}</span></div>)}</div> : <p>Informe seu peso para dividir os gramas de cada macro pelo peso em kg.</p>}
+        {perKg ? <div className="distribution-values">{(["protein", "carbs", "fat"] as const).map(key => { const display = nutrientDisplay(totals, key, items, bodyWeightKg!); return <div key={key}><b>{display.value}{display.value === "Não informado" ? "" : " g/kg"}</b><span>{labels[key]}{display.partial ? " (parcial)" : ""}</span></div>;})}</div> : <p>Informe seu peso para dividir os gramas de cada macro pelo peso em kg.</p>}
       </section>
       <section
         className="macro-distribution"
@@ -166,6 +176,7 @@ export function Summary({
       </div>
       {(["kcal", "protein", "carbs", "fat", "fiber", "sodium"] as const).map(
         (key) => {
+          const display = nutrientDisplay(totals, key, items);
           const { difference, percent } = goalDifference(
             totals[key],
             goals[key],
@@ -175,7 +186,7 @@ export function Summary({
               <div>
                 <span>{labels[key]}</span>
                 <b>
-                  {format(totals[key], key === "kcal" ? 0 : 1)}{" "}
+                  {display.value}{display.partial ? " (parcial)" : ""}{" "}
                   <small>
                     / {goals[key] === null ? "—" : format(goals[key])}{" "}
                     {unit(key)}
@@ -198,7 +209,7 @@ export function Summary({
                 {goals[key] === null
                   ? "Meta não definida"
                   : totals[key] === null
-                    ? "Total desconhecido: há dados ausentes"
+                    ? "Comparação incompleta: há alimentos sem informação"
                     : `${percent === null ? "Percentual indisponível" : `${format(percent, 0)}% da meta`} · ${format(Math.abs(difference ?? 0))} ${unit(key)} ${(difference ?? 0) > 0 ? "acima" : (difference ?? 0) < 0 ? "abaixo" : "de diferença"}`}
               </p>
             </div>
