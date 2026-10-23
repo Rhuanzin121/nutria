@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import {
   calculateDiet,
-  activeMealItems, dietItems, updateMealItems,
+  activeMealItems, dietItems, updateMealItems, addItemSubstitution,
   duplicateDiet,
   duplicateMeal,
   newDiet,
@@ -183,7 +183,7 @@ export default function App() {
           : {
               ...meal,
               ...updateMealItems(meal, picker.replaceId
-                ? activeMealItems(meal).map((i) => (i.id === picker.replaceId ? item : i))
+                ? activeMealItems(meal).map((i) => (i.id === picker.replaceId ? addItemSubstitution(i, item) : i))
                 : [...activeMealItems(meal), item]),
             },
       ),
@@ -534,7 +534,7 @@ export default function App() {
                   <div className="source-footer">
                     <Check size={15} />
                     <span>
-                      Dados rastreáveis · TACO / NEPA – UNICAMP
+                      Dados rastreáveis · TACO, IBGE/POF e USDA
                       <a
                         href="https://nepa.unicamp.br/publicacoes/"
                         target="_blank"
@@ -653,7 +653,7 @@ export default function App() {
         >
           <div className="form-grid">
             {nutrients
-              .filter((k) => k !== "saturated")
+              .filter((k) => k !== "saturated" && k !== "sodium")
               .map((key) => (
                 <label key={key}>
                   {labels[key]} ({unit(key)})
@@ -703,7 +703,7 @@ export default function App() {
               {sourceItem.food.updatedAt ?? "Não informada"}
             </p>
             {sourceItem.food.page && (
-              <p>Página impressa: {sourceItem.food.page}</p>
+              <p>Página da fonte: {sourceItem.food.page}</p>
             )}
             <MacroLine totals={sourceItem.food.per100} />
             <p>{sourceItem.food.notes}</p>

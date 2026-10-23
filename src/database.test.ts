@@ -3,6 +3,7 @@ import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import migration from "../supabase/migrations/202610210001_initial.sql?raw";
 import migration2 from "../supabase/migrations/202610210002_meal_time_measures.sql?raw";
 import migration3 from "../supabase/migrations/202610220003_meal_alternatives_weight.sql?raw";
+import migration4 from "../supabase/migrations/202610230004_food_substitutions.sql?raw";
 import { newDiet, foodSchema, emptyTotals, type AppState } from "./model";
 // Disposable, artificial users. PostgreSQL auth.uid() is stubbed; Supabase Auth itself is not emulated.
 const A = "11111111-1111-4111-8111-111111111111";
@@ -21,6 +22,7 @@ beforeAll(async () => {
   await db.exec(migration);
   await db.exec(migration2);
   await db.exec(migration3);
+  await db.exec(migration4);
 }, 30000);
 afterAll(async () => {
   await db.close();
@@ -49,6 +51,8 @@ describe("PostgreSQL: persistência e isolamento real por RLS", () => {
     d.meals[0].items = [
       {
         id: "item-fixture",
+        substitutions: [{id:"sql-choice",food,grams:80}],
+        activeSubstitutionId: "sql-choice",
         food,
         grams: 160,
         measure: { name: "unidade", amount: 80, source: "Fixture de teste" },
@@ -74,6 +78,7 @@ describe("PostgreSQL: persistência e isolamento real por RLS", () => {
       "insert into public.diet_workspaces(user_id,data,revision) values($1,$2,1)",
       [A, JSON.stringify(state)],
     );
+    expect((await db.query<{active_substitution_id:string;substitutions:unknown[]}>("select active_substitution_id,substitutions from public.meal_items")).rows[0]).toMatchObject({active_substitution_id:"sql-choice",substitutions:d.meals[0].items[0].substitutions});
     expect((await db.query("select * from public.diets")).rows).toHaveLength(1);
     expect((await db.query<{body_weight_kg:string}>("select body_weight_kg from public.diets")).rows[0].body_weight_kg).toBe("80");
     const projectedMeal = (await db.query<{alternatives: unknown[];active_alternative_id:string}>("select alternatives,active_alternative_id from public.meals where position=0")).rows[0];

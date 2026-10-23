@@ -1,4 +1,4 @@
-import { activeMealItems, calculateDiet, dietSchema, format, macroDistribution, macrosPerKg, nutrients, sumItems, type Diet, type Item, type Totals } from "./model";
+import { selectedItem, activeMealItems, calculateDiet, dietSchema, format, macroDistribution, macrosPerKg, nutrients, sumItems, type Diet, type Item, type Totals } from "./model";
 import { dietFilename } from "./storage";
 
 const names = {kcal: "Calorias", protein: "Proteínas", carbs: "Carboidratos", fat: "Gorduras", fiber: "Fibras", sodium: "Sódio", saturated: "Gorduras saturadas"};
@@ -54,7 +54,8 @@ export function createDietPdf(input: Diet): Uint8Array {
   }
   function items(rows: Item[]) {
     if (!rows.length) text("Nenhum alimento nesta opção.");
-    for (const item of rows) {
+    for (const original of rows) {
+      const item = selectedItem(original);
       const quantity = item.measure ? `${format(item.grams / item.measure.amount, 2)} ${item.measure.name} = ${format(item.grams)} ${item.food.unit} (${item.measure.source})` : `${format(item.grams)} ${item.food.unit}`;
       const source = `Fonte: ${item.food.source}${item.food.brand ? " | " + item.food.brand : ""}`;
       const height = wrap(item.food.name).length * 15 + wrap(quantity).length * 15 + wrap(macroText(sumItems([item]))).length * 14 + wrap(source).length * 13 + 10;
@@ -65,6 +66,11 @@ export function createDietPdf(input: Diet): Uint8Array {
         : `${format(item.grams)} ${item.food.unit}`);
       text(macroText(sumItems([item])), 9);
       text(source, 8);
+      for (const choice of [{...original, id: "principal"}, ...(original.substitutions ?? [])].filter(c => original.activeSubstitutionId ? c.id !== original.activeSubstitutionId : c.id !== "principal")) {
+        if (!original.substitutions?.length) break;
+        text(`Opção de alimento (fora do total): ${choice.food.name} - ${format(choice.grams)} ${choice.food.unit}`, 9);
+        text(macroText(sumItems([{...choice, substitutions: [], activeSubstitutionId: null}])) , 8);
+      }
       y -= 5;
     }
     text("Subtotal - " + macroText(sumItems(rows)), 9, true);
@@ -75,7 +81,7 @@ export function createDietPdf(input: Diet): Uint8Array {
   text("Totais calculados usando somente a opção selecionada de cada refeição.", 9);
   heading("Resumo da dieta");
   const totals = calculateDiet(diet);
-  for (const key of nutrients) text(`${names[key]}: ${format(totals[key])} ${unit(key)}${diet.goals[key] === null ? "" : ` | Meta: ${format(diet.goals[key])} ${unit(key)}`}`);
+  for (const key of nutrients.filter(k => k !== "sodium" && k !== "saturated")) text(`${names[key]}: ${format(totals[key])} ${unit(key)}${diet.goals[key] === null ? "" : ` | Meta: ${format(diet.goals[key])} ${unit(key)}`}`);
   const dist = macroDistribution(totals);
   if (dist) text(`Energia dos macros: carboidratos ${format(dist.carbs)}% | proteínas ${format(dist.protein)}% | gorduras ${format(dist.fat)}%`, 9);
   const perKg = macrosPerKg(totals, diet.bodyWeightKg);

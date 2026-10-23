@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { normalizeUsda } from "../scripts/import-usda.mjs";
 import {
   supplementalFoods,
+  brazilianFoods,
   officialFoods,
   catalog,
   searchFoods,
@@ -61,7 +62,8 @@ describe("Importação USDA e procedência", () => {
       recipes: [],
     });
     expect(foods[0].id).toBe(officialFoods[0].id);
-    expect(foods[597].id.startsWith("usda:")).toBe(true);
+    expect(foods[597].id.startsWith("ibge:")).toBe(true);
+    expect(foods[597 + brazilianFoods.length].id.startsWith("usda:")).toBe(true);
     expect(searchFoods(foods, "zzzzxyz nao encontrado")).toEqual([]);
   });
   it("recusa links ativos e nutrientes inválidos de importações", () => {

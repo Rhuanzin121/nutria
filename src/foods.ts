@@ -1,5 +1,6 @@
 import { supplements } from "./supplements";
 import { packagedFoods } from "./packagedFoods";
+import ibge from "./ibge.json";
 import taco from "./taco.json";
 import usda from "./usda.json";
 import {
@@ -10,6 +11,7 @@ import {
   type AppState,
   type Food,
 } from "./model";
+export const brazilianFoods: Food[] = ibge.map(food => foodSchema.parse(food));
 export const officialFoods: Food[] = taco.map((food) => foodSchema.parse(food));
 export const supplementalFoods: Food[] = usda.map((food) =>
   foodSchema.parse(food),
@@ -138,6 +140,7 @@ export function catalog(state: AppState) {
     ...state.customFoods,
     ...state.recipes.map(recipeFood),
     ...officialFoods,
+    ...brazilianFoods,
     ...supplementalFoods,
     ...supplements,
     ...packagedFoods,

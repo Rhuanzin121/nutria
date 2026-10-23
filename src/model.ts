@@ -57,11 +57,19 @@ export const foodSchema = z.object({
   measures: z.array(measureSchema).max(100).default([]),
 });
 export type Food = z.infer<typeof foodSchema>;
-export const itemSchema = z.object({
+const itemChoiceSchema = z.object({
   id: z.string(),
   food: foodSchema,
   grams: z.number().finite().positive().max(10000),
   measure: measureSchema.optional(),
+});
+export const itemSchema = itemChoiceSchema.extend({
+  substitutions: z.array(itemChoiceSchema).max(20).optional(),
+  activeSubstitutionId: z.string().nullable().optional(),
+}).superRefine((item, ctx) => {
+  if (new Set((item.substitutions ?? []).map(s => s.id)).size !== (item.substitutions ?? []).length ||
+      (item.activeSubstitutionId != null && !item.substitutions?.some(s => s.id === item.activeSubstitutionId)))
+    ctx.addIssue({code: "custom", message: "Substituição de alimento inválida."});
 });
 export const alternativeSchema = z.object({
   id: z.string().min(1),
@@ -122,7 +130,21 @@ export const stateSchema = z.object({
 });
 export type Diet = z.infer<typeof dietSchema>;
 export type Meal = z.infer<typeof mealSchema>;
-export type Item = z.infer<typeof itemSchema>;
+// Optional on input to preserve compatibility with old backups and recipe ingredients.
+type ParsedItem = z.infer<typeof itemSchema>;
+export type Item = Omit<ParsedItem, "substitutions" | "activeSubstitutionId"> & Partial<Pick<ParsedItem, "substitutions" | "activeSubstitutionId">>;
+export function selectedItem(item: Item): Item {
+  const selected = item.substitutions?.find(s => s.id === item.activeSubstitutionId);
+  return selected ? {...selected, id: item.id} : item;
+}
+export function editSelectedItem(item: Item, grams: number, measure?: Measure): Item {
+  if (!item.activeSubstitutionId) return {...item, grams, measure};
+  return {...item, substitutions: item.substitutions?.map(s => s.id === item.activeSubstitutionId ? {...s, grams, measure} : s)};
+}
+export function addItemSubstitution(item: Item, choice: Item): Item {
+  const {id, food, grams, measure} = choice;
+  return itemSchema.parse({...item, substitutions: [...(item.substitutions ?? []), {id, food, grams, measure}]});
+}
 export type Recipe = z.infer<typeof recipeSchema>;
 export type AppState = z.infer<typeof stateSchema>;
 export const emptyTotals = (): Totals => ({
@@ -153,7 +175,8 @@ export function scaleTotals(totals: Totals, factor: number): Totals {
 }
 export function calculateItem(item: Item): Totals {
   const parsed = itemSchema.parse(item);
-  return scaleTotals(parsed.food.per100, parsed.grams / parsed.food.referenceAmount);
+  const selected = selectedItem(parsed);
+  return scaleTotals(selected.food.per100, selected.grams / selected.food.referenceAmount);
 }
 // Compensated summation avoids accumulating floating-point error.
 export function sumItems(items: Item[]): Totals {
@@ -299,7 +322,7 @@ export function macroDistribution(totals: Totals) {
     : null;
 }
 export function nutrientCoverage(items: Item[], key: Nutrient) {
-  const knownItems = items.filter((item) => item.food.per100[key] !== null);
+  const knownItems = items.filter((item) => selectedItem(item).food.per100[key] !== null);
   return {
     known: sumItems(knownItems)[key] ?? 0,
     missing: items.length - knownItems.length,
