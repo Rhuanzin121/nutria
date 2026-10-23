@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { writeFileSync } from "node:fs";
-import { activeMealItems, calculateDiet, duplicateDiet, newDiet, macrosPerKg, stateSchema, updateMealItems, emptyTotals } from "./model";
+import { activeMealItems, calculateDiet, duplicateDiet, newDiet, macrosPerKg, stateSchema, updateMealItems, emptyTotals, macroDistribution, sumItems } from "./model";
 import { officialFoods } from "./foods";
 import { householdMeasures } from "./household";
 import { dietFilename } from "./storage";
@@ -40,9 +40,9 @@ describe("Planejamento e documentos", () => {
     d.meals[0].activeAlternativeId="absent";
     expect(stateSchema.safeParse({...parsed,diets:[d]}).success).toBe(false);
   });
-  it("calcula g/kg sem dividir por zero e preserva macro desconhecido", () => {
+  it("calcula g/kg sem dividir por zero e considera macro ausente como zero", () => {
     const totals = {...emptyTotals(),protein:160,carbs:240,fat:null};
-    expect(macrosPerKg(totals,80)).toEqual({protein:2,carbs:3,fat:null});
+    expect(macrosPerKg(totals,80)).toEqual({protein:2,carbs:3,fat:0});
     expect(macrosPerKg(totals,0)).toBeNull(); expect(macrosPerKg(totals,null)).toBeNull();
   });
   it("oferece fatia média e mantém medidas oficiais", () => {
@@ -73,10 +73,36 @@ describe("Planejamento e documentos", () => {
 
 import { supplements } from "./supplements";
 import { calculateItem } from "./model";
+it('mantém 40/40/20 ao adicionar alimento cujos nutrientes são todos ausentes',()=>{
+  const known = {...bread,per100:{...emptyTotals(),protein:100,carbs:100,fat:200/9}};
+  const unknown = {...bread,id:'missing-all',per100:{kcal:null,protein:null,carbs:null,fat:null,fiber:null,sodium:null,saturated:null}};
+  const totals = sumItems([{id:'known',food:known,grams:100},{id:'unknown',food:unknown,grams:1}]);
+  expect(macroDistribution(totals)).toEqual({protein:40,carbs:40,fat:20});
+  expect(totals.fiber).toBe(0);
+  expect(unknown.per100.protein).toBeNull();
+});
+it('converte nutrientes vazios de backup antigo em zero sem definir metas',()=>{
+  const d=newDiet('Backup antigo');
+  d.meals[0].items=[{id:'old',food:{...bread,per100:{...bread.per100,protein:null,carbs:null}},grams:100}];
+  const parsed=stateSchema.parse({version:1,selectedId:d.id,diets:[d],customFoods:[],recipes:[]});
+  expect(parsed.diets[0].meals[0].items[0].food.per100.protein).toBe(0);
+  expect(parsed.diets[0].meals[0].items[0].food.per100.carbs).toBe(0);
+  expect(parsed.diets[0].goals.protein).toBeNull();
+  expect(parsed.diets[0].bodyWeightKg).toBeNull();
+});
 it('usa a porção exata do rótulo de cada whey, sem arredondar para 100 g',()=>{
   expect(supplements).toHaveLength(3);
   expect(supplements.map(f=>calculateItem({id:f.id,food:f,grams:f.referenceAmount}).protein)).toEqual([24,21,24]);
   const growth=supplements[2];
   expect(calculateItem({id:'half',food:growth,grams:15}).protein).toBe(12);
   expect(supplements[0].name).toContain('doce de leite');
+});
+
+import { packagedFoods } from "./packagedFoods";
+import { searchFoods } from "./foods";
+it("encontra pão de hambúrguer Pullman e calcula duas unidades de 50 g",()=>{
+  const bread=searchFoods(packagedFoods,"pao de hamburguer pullman")[0];
+  expect(bread.brand).toBe("Pullman");
+  expect(bread.measures[0].amount).toBe(50);
+  expect(calculateItem({id:"two-buns",food:bread,grams:100})).toMatchObject({kcal:266,protein:9,carbs:50,fat:3.4,fiber:2.8,sodium:466});
 });

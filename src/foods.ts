@@ -1,4 +1,5 @@
 import { supplements } from "./supplements";
+import { packagedFoods } from "./packagedFoods";
 import taco from "./taco.json";
 import usda from "./usda.json";
 import {
@@ -139,6 +140,7 @@ export function catalog(state: AppState) {
     ...officialFoods,
     ...supplementalFoods,
     ...supplements,
+    ...packagedFoods,
     mixedVegetables,
   ];
 }

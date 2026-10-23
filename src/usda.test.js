@@ -18,11 +18,13 @@ const fixture = {
   ],
 };
 describe("Importação USDA e procedência", () => {
-  it("converte IDs e unidades sem fabricar ausentes", () => {
-    const food = foodSchema.parse(normalizeUsda(fixture));
+  it("preserva ausentes na importação bruta e usa zero no aplicativo", () => {
+    const raw = normalizeUsda(fixture);
+    expect(raw.per100.fiber).toBeNull();
+    const food = foodSchema.parse(raw);
     expect(food.per100.protein).toBe(12);
     expect(food.per100.kcal).toBe(151);
-    expect(food.per100.fiber).toBeNull();
+    expect(food.per100.fiber).toBe(0);
     expect(food.per100.sodium).toBe(20);
   });
   it("não confunde kcal com kJ nem sódio em g com mg", () => {

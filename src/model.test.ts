@@ -70,11 +70,11 @@ describe("Motor nutricional", () => {
     });
     expect(newDiet().goals).toEqual(unsetTotals());
   });
-  it("preserva nutrientes ausentes em totais e não oculta valores conhecidos", () => {
+  it("considera nutrientes ausentes como zero e mantém os valores conhecidos", () => {
     const row = item();
     row.food.per100.fiber = null;
     const result = sumItems([row, item(100)]);
-    expect(result.fiber).toBeNull();
+    expect(result.fiber).toBe(0);
     expect(result.kcal).toBe(338);
     expect(goalDifference(null, 20).percent).toBeNull();
   });
@@ -138,7 +138,7 @@ describe("Catálogo real", () => {
     expect(foods.some((f) => f.id === "taco:4")).toBe(false);
     expect(searchFoods(officialFoods, "mucarela").length).toBeGreaterThan(0);
   });
-  it("confere valores de referência do arroz e mantém NA desconhecido", () => {
+  it("confere arroz e converte NA em zero conforme configuração", () => {
     expect(officialFoods.find((f) => f.id === "taco:3")?.per100).toMatchObject({
       kcal: 128,
       protein: 2.5,
@@ -149,7 +149,7 @@ describe("Catálogo real", () => {
     });
     expect(
       officialFoods.find((f) => f.id === "taco:260")?.per100.protein,
-    ).toBeNull();
+    ).toBe(0);
   });
 });
 describe("Persistência", () => {

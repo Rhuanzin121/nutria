@@ -20,6 +20,10 @@ export const totalsSchema = z.object({
   saturated: value,
 });
 export type Totals = z.infer<typeof totalsSchema>;
+// User-selected policy: missing food nutrients are zero. Goals stay nullable.
+export function zeroMissingNutrients(totals: Totals): Totals {
+  return Object.fromEntries(nutrients.map(key => [key, totals[key] ?? 0])) as Totals;
+}
 export const unitSchema = z.enum(["g", "ml", "porção"]);
 export const measureSchema = z.object({
   name: z.string().trim().min(1).max(100),
@@ -47,7 +51,7 @@ export const foodSchema = z.object({
   page: z.number().int().nullable(),
   unit: unitSchema,
   referenceAmount: z.number().positive().finite().min(0.001),
-  per100: totalsSchema,
+  per100: totalsSchema.transform(zeroMissingNutrients),
   manual: z.boolean().default(false),
   notes: z.string().max(2000).default(""),
   measures: z.array(measureSchema).max(100).default([]),
@@ -148,10 +152,10 @@ export function scaleTotals(totals: Totals, factor: number): Totals {
   ) as Totals;
 }
 export function calculateItem(item: Item): Totals {
-  itemSchema.parse(item);
-  return scaleTotals(item.food.per100, item.grams / item.food.referenceAmount);
+  const parsed = itemSchema.parse(item);
+  return scaleTotals(parsed.food.per100, parsed.grams / parsed.food.referenceAmount);
 }
-// Compensated summation avoids accumulating floating-point error; any unknown makes the total unknown.
+// Compensated summation avoids accumulating floating-point error.
 export function sumItems(items: Item[]): Totals {
   const rows = items.map(calculateItem);
   return Object.fromEntries(
@@ -181,7 +185,7 @@ export function updateMealItems(meal: Meal, items: Item[]): Meal {
 export function macrosPerKg(totals: Totals, kg: number | null) {
   if (kg === null || !Number.isFinite(kg) || kg <= 0) return null;
   return Object.fromEntries((["protein", "carbs", "fat"] as const).map(key =>
-    [key, totals[key] === null ? null : totals[key] / kg])) as Pick<Totals, "protein" | "carbs" | "fat">;
+    [key, (totals[key] ?? 0) / kg])) as Pick<Totals, "protein" | "carbs" | "fat">;
 }
 export function newDiet(name = "Nova dieta"): Diet {
   return {
@@ -280,12 +284,10 @@ export function measureQuantity(count: number, measure: Measure) {
     .parse(count * measure.amount);
 }
 export function macroDistribution(totals: Totals) {
-  if (totals.carbs === null || totals.protein === null || totals.fat === null)
-    return null;
   const energy = {
-    carbs: totals.carbs * 4,
-    protein: totals.protein * 4,
-    fat: totals.fat * 9,
+    carbs: (totals.carbs ?? 0) * 4,
+    protein: (totals.protein ?? 0) * 4,
+    fat: (totals.fat ?? 0) * 9,
   };
   const total = energy.carbs + energy.protein + energy.fat;
   return total > 0

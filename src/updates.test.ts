@@ -115,7 +115,7 @@ describe("Distribuição dos macros e fibras", () => {
     expect(macroDistribution(emptyTotals())).toBeNull();
     expect(macroDistribution({ ...emptyTotals(), protein: null })).toBeNull();
   });
-  it("mostra subtotal conhecido de fibras sem converter ausentes para zero", () => {
+  it("soma fibras com valores ausentes considerados zero", () => {
     const items: Item[] = [
       { id: "known", food, grams: 150 },
       {
@@ -124,7 +124,7 @@ describe("Distribuição dos macros e fibras", () => {
         grams: 100,
       },
     ];
-    expect(sumItems(items).fiber).toBeNull();
+    expect(sumItems(items).fiber).toBe(6);
     expect(nutrientCoverage(items, "fiber")).toEqual({
       known: 6,
       missing: 1,

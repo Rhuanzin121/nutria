@@ -96,7 +96,7 @@ export function createDietPdf(input: Diet): Uint8Array {
   }
   if (diet.notes) { heading("Anotações"); text(diet.notes); }
   heading("Como ler este plano");
-  text("Valores desconhecidos aparecem como '-'; não foram tratados como zero. Medidas médias são estimativas: confirme rótulo ou pesagem. As substituições não são automaticamente equivalentes. Percentuais usam 4 kcal/g para proteínas e carboidratos e 9 kcal/g para gorduras.", 9);
+  text("Valores nutricionais não informados são considerados 0. Medidas médias são estimativas: confirme rótulo ou pesagem. As substituições não são automaticamente equivalentes. Percentuais usam 4 kcal/g para proteínas e carboidratos e 9 kcal/g para gorduras.", 9);
   const objects: string[] = ["<< /Type /Catalog /Pages 2 0 R >>", "", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"];
   const kids: string[] = [];
   pages.forEach((commands, index) => {
