@@ -1,5 +1,5 @@
 import {
-  format, macrosPerKg,
+  format, macrosPerKg, zeroMissingNutrients,
   goalDifference,
   macroDistribution,
   nutrientCoverage,
@@ -20,11 +20,8 @@ export const labels: Record<Nutrient, string> = {
 export const unit = (key: Nutrient) =>
   key === "kcal" ? "kcal" : key === "sodium" ? "mg" : "g";
 export function nutrientDisplay(totals: Totals, key: Nutrient, items?: Item[], divisor = 1) {
-  if (totals[key] !== null) return {value: format(totals[key] / divisor, divisor === 1 ? key === "kcal" ? 0 : 1 : 2), partial: false};
-  if (!items) return {value: "—", partial: false};
-  const coverage = nutrientCoverage(items, key);
-  if (coverage.total === coverage.missing) return {value: "Não informado", partial: true};
-  return {value: `≥ ${format(coverage.known / divisor, divisor === 1 ? key === "kcal" ? 0 : 1 : 2)}`, partial: true};
+  const value = totals[key] ?? (items ? nutrientCoverage(items, key).known : 0);
+  return {value: format(value / divisor, divisor === 1 ? key === "kcal" ? 0 : 1 : 2), partial: false};
 }
 export function MacroLine({
   totals,
@@ -39,11 +36,11 @@ export function MacroLine({
         const display = nutrientDisplay(totals, key, items);
         return (
         <span key={key} title={labels[key]}>
-          <b>{display.value === "Não informado" ? "—" : display.value}</b>{" "}
+          <b>{display.value}</b>{" "}
           {unit(key)}
           <small>
             {labels[key]}
-            {display.partial ? " (parcial)" : ""}
+            
           </small>
         </span>
       );})}
@@ -51,7 +48,7 @@ export function MacroLine({
   );
 }
 export function Summary({
-  totals,
+  totals: originalTotals,
   goals,
   onGoals,
   items, bodyWeightKg = null, onWeight,
@@ -63,10 +60,10 @@ export function Summary({
   onGoals: () => void;
   items: Item[];
 }) {
+  const totals = zeroMissingNutrients(originalTotals);
   const perKg = macrosPerKg(totals, bodyWeightKg);
   const distribution = macroDistribution(totals);
   const fiber = nutrientCoverage(items, "fiber");
-  const missingMacros = (["protein", "carbs", "fat"] as const).filter(key => totals[key] === null);
   return (
     <aside className="summary">
       <div className="summary-title">
@@ -76,9 +73,9 @@ export function Summary({
       <div className="energy">
         <span>VALOR ENERGÉTICO TOTAL</span>
         <div>
-          {nutrientDisplay(totals, "kcal", items).value} <small>{nutrientDisplay(totals, "kcal", items).value === "Não informado" ? "" : "kcal"}</small>
+          {nutrientDisplay(totals, "kcal", items).value} <small>kcal</small>
         </div>
-        <p>{totals.kcal === null ? "Subtotal parcial dos alimentos com calorias informadas" : "Calculado a partir das suas refeições"}</p>
+        <p>Calculado a partir das suas refeições</p>
       </div>
       <div className="summary-macros" role="region" aria-label="Macronutrientes da dieta">
         {(["protein", "carbs", "fat"] as const).map((key) => {
@@ -87,22 +84,11 @@ export function Summary({
             <i className={key} />
             <span>{labels[key]}</span>
             <b>
-              {display.value} <small>{display.value === "Não informado" ? "" : "g"}{display.partial ? " · parcial" : ""}</small>
+              {display.value} <small>{"g"}</small>
             </b>
           </div>
         );})}
       </div>
-      {missingMacros.length > 0 && <section className="missing-macros" aria-label="Macros com dados ausentes">
-        <p>Totais parciais: “≥” mostra a soma dos valores conhecidos. Os alimentos sem informação não foram tratados como zero.</p>
-        <details><summary>Ver alimentos sem dados de macros</summary>
-          {missingMacros.map(key => <div key={key}><b>{labels[key]}</b><ul>{items.filter(item => item.food.per100[key] === null).map(item => <li key={item.id}>{item.food.name}</li>)}</ul></div>)}
-        </details>
-      </section>}
-      <section className="per-kg" aria-label="Macros por peso corporal">
-        <h3>Macros por kg de peso corporal</h3>
-        <label>Peso corporal (kg)<NumberInput label="Peso corporal em kg" value={bodyWeightKg} nullable min={0.001} max={600} onCommit={n => { if (n === null || n > 0) onWeight?.(n); }} /></label>
-        {perKg ? <div className="distribution-values">{(["protein", "carbs", "fat"] as const).map(key => { const display = nutrientDisplay(totals, key, items, bodyWeightKg!); return <div key={key}><b>{display.value}{display.value === "Não informado" ? "" : " g/kg"}</b><span>{labels[key]}{display.partial ? " (parcial)" : ""}</span></div>;})}</div> : <p>Informe seu peso para dividir os gramas de cada macro pelo peso em kg.</p>}
-      </section>
       <section
         className="macro-distribution"
         aria-label="Distribuição energética dos macronutrientes"
@@ -127,48 +113,35 @@ export function Summary({
                 </div>
               ))}
             </div>
-            <p>
-              Proporção da energia dos macros: carboidratos e proteínas a 4
-              kcal/g; gorduras a 9 kcal/g. As calorias da fonte são mantidas.
-            </p>
+            <details className="distribution-info"><summary>Como é calculado</summary><p>
+              Percentual da energia dos macros: carboidratos e proteínas a 4 kcal/g; gorduras a 9 kcal/g.
+               As calorias da fonte são mantidas.
+            </p></details>
           </>
         ) : (
           <p>
             {items.length
-              ? "Há macros desconhecidos ou energia de macros igual a zero. Complete os valores para calcular os percentuais."
+              ? "Sem energia de macros informada para calcular os percentuais."
               : "Adicione alimentos para ver as porcentagens."}
           </p>
         )}
+      </section>
+      <section className="per-kg" aria-label="Macros por peso corporal">
+        <h3>Macros por kg de peso corporal</h3>
+        <label>Peso corporal (kg)<NumberInput label="Peso corporal em kg" value={bodyWeightKg} nullable min={0.001} max={600} onCommit={n => { if (n === null || n > 0) onWeight?.(n); }} /></label>
+        {perKg ? <div className="distribution-values">{(["protein", "carbs", "fat"] as const).map(key => { const display = nutrientDisplay(totals, key, items, bodyWeightKg!); return <div key={key}><b>{display.value}{" g/kg"}</b><span>{labels[key]}</span></div>;})}</div> : <p>Informe seu peso para dividir os gramas de cada macro pelo peso em kg.</p>}
       </section>
       <section className="fiber-summary" aria-label="Fibras da dieta">
         <div>
           <h3>Fibras alimentares</h3>
           <b>
-            {fiber.missing ? "≥ " : ""}
+            
             {format(fiber.known)} <small>g</small>
           </b>
         </div>
         <p>
-          {fiber.missing
-            ? `Total parcial: ${fiber.missing} de ${fiber.total} alimentos sem informação de fibras.`
-            : "Total das fibras informadas nas refeições."}
+          Total das fibras das refeições.
         </p>
-        {fiber.missing > 0 && (
-          <details>
-            <summary>Ver alimentos sem informação</summary>
-            <ul>
-              {items
-                .filter((item) => item.food.per100.fiber === null)
-                .map((item) => (
-                  <li key={item.id}>{item.food.name}</li>
-                ))}
-            </ul>
-            <p>
-              “≥” indica o subtotal conhecido; os valores ausentes não foram
-              tratados como zero.
-            </p>
-          </details>
-        )}
       </section>
       <div className="goals-title">
         <h3>Comparação com metas</h3>
@@ -186,7 +159,7 @@ export function Summary({
               <div>
                 <span>{labels[key]}</span>
                 <b>
-                  {display.value}{display.partial ? " (parcial)" : ""}{" "}
+                  {display.value}{" "}
                   <small>
                     / {goals[key] === null ? "—" : format(goals[key])}{" "}
                     {unit(key)}
@@ -221,8 +194,7 @@ export function Summary({
         <b>{format(totals.saturated)} g</b>
       </div>
       <p className="muted text-small">
-        “—” indica dados desconhecidos. Um nutriente ausente em um item deixa o
-        total desse nutriente desconhecido.
+        Valores nutricionais não informados são considerados 0.
       </p>
     </aside>
   );

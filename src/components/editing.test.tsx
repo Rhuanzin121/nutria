@@ -125,7 +125,7 @@ describe("Regressões da interface", () => {
     });
     expect(time).toBe("12:30");
   });
-  it("exibe fibras parciais e percentuais dos macros", () => {
+  it("exibe fibras e percentuais sem avisos de dados ausentes", () => {
     const food = foodSchema.parse({
       id: "ui-fixture",
       name: "Fixture artificial de fibras",
@@ -159,11 +159,8 @@ describe("Regressões da interface", () => {
         onGoals={() => {}}
       />,
     );
-    expect(
-      screen.getByText(
-        "Total parcial: 1 de 2 alimentos sem informação de fibras.",
-      ),
-    ).toBeTruthy();
+    expect(screen.queryByText(/Total parcial:/)).toBeNull();
+    expect(screen.getByText("Total das fibras das refeições.")).toBeTruthy();
     expect(screen.getAllByText("40%")).toHaveLength(2);
     expect(screen.getByText("20%")).toBeTruthy();
   });
@@ -184,26 +181,26 @@ it('cria substituição vazia, permite renomear e recupera alimentos da principa
   expect(screen.getByRole('button',{name:/^Principal$/})).toBeTruthy();
 });
 
-it('mostra proteínas e carboidratos conhecidos quando outro alimento não informa macros',()=>{
+it('mantém proteínas, carboidratos e percentuais ao incluir alimento com macros vazios',()=>{
   const known=foodSchema.parse({id:'known-macros',name:'Alimento com dados',category:'Teste',source:'Fixture',sourceUrl:'',page:null,unit:'g',referenceAmount:100,per100:{...emptyTotals(),protein:30,carbs:50,fat:10}});
   const missing={...known,id:'missing-macros',name:'Alimento sem macros',per100:{...known.per100,protein:null,carbs:null}};
   const items=[{id:'known',food:known,grams:100},{id:'missing',food:missing,grams:100}];
   const totals=sumItems(items);
-  expect(totals.protein).toBeNull();expect(totals.carbs).toBeNull();
+  expect(totals.protein).toBe(30);expect(totals.carbs).toBe(50);
   render(<Summary totals={totals} items={items} goals={emptyTotals()} bodyWeightKg={80} onGoals={()=>{}}/>);
-  expect(screen.getByLabelText('Total de Proteínas').textContent).toContain('≥ 30');
-  expect(screen.getByLabelText('Total de Carboidratos').textContent).toContain('≥ 50');
+  expect(screen.getByLabelText('Total de Proteínas').textContent).toContain('30');
+  expect(screen.getByLabelText('Total de Carboidratos').textContent).toContain('50');
   expect(screen.getByLabelText('Total de Gorduras').textContent).toContain('20');
   expect(screen.getByLabelText('Total de Gorduras').textContent).not.toContain('parcial');
-  expect(screen.getAllByText('Alimento sem macros')).toHaveLength(2);
-  expect(screen.getByText('≥ 0,38 g/kg')).toBeTruthy();
-  expect(screen.getByText('≥ 0,63 g/kg')).toBeTruthy();
+  expect(screen.queryByRole('region',{name:'Macros com dados ausentes'})).toBeNull();
+  expect(screen.getByText('0,38 g/kg')).toBeTruthy();
+  expect(screen.getByText('0,63 g/kg')).toBeTruthy();
 });
-it('distingue ausência total de informação de um zero conhecido',()=>{
+it('exibe zero para alimentos com todos os macros vazios',()=>{
   const food=foodSchema.parse({id:'all-missing',name:'Sem informação',category:'Teste',source:'Fixture',sourceUrl:'',page:null,unit:'g',referenceAmount:100,per100:{...emptyTotals(),protein:null,carbs:null}});
   const items=[{id:'x',food,grams:100}];
   render(<Summary totals={sumItems(items)} items={items} goals={emptyTotals()} onGoals={()=>{}}/>);
-  expect(screen.getByLabelText('Total de Proteínas').textContent).toContain('Não informado');
-  expect(screen.getByLabelText('Total de Carboidratos').textContent).toContain('Não informado');
+  expect(screen.getByLabelText('Total de Proteínas').textContent).toContain('0');
+  expect(screen.getByLabelText('Total de Carboidratos').textContent).toContain('0');
   expect(screen.getByLabelText('Total de Gorduras').textContent).toContain('0');
 });

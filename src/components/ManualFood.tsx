@@ -19,7 +19,7 @@ export function ManualFood({
   return (
     <Dialog
       title="Cadastrar alimento"
-      description="Transcreva o rótulo ou uma fonte autorizada. Campos nutricionais vazios permanecem desconhecidos."
+      description="Transcreva o rótulo ou uma fonte autorizada. Campos nutricionais vazios serão considerados 0."
       onClose={onClose}
     >
       <form
