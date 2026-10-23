@@ -16,8 +16,10 @@ export function FoodPicker({
   onSelect,
   onClose,
   onManual,
+  substitution = false,
 }: {
   foods: Food[];
+  substitution?: boolean;
   onSelect: (item: Item) => void;
   onClose: () => void;
   onManual: () => void;
@@ -37,6 +39,8 @@ export function FoodPicker({
             !source ||
             (source === "taco"
               ? f.id.startsWith("taco:")
+              : source === "ibge"
+                ? f.id.startsWith("ibge:")
               : source === "usda"
                 ? f.id.startsWith("usda:")
                 : source === "labels"
@@ -52,8 +56,8 @@ export function FoodPicker({
   );
   return (
     <Dialog
-      title="Adicionar alimento"
-      description="Pesquise no catálogo. Confira o preparo e a unidade antes de adicionar."
+      title={substitution ? "Adicionar substituição do alimento" : "Adicionar alimento"}
+      description={substitution ? "Escolha uma opção e sua quantidade. Ela ficará salva junto ao alimento; somente a opção selecionada entra no total." : "Pesquise no catálogo. Confira o preparo e a unidade antes de adicionar."}
       onClose={onClose}
       wide
     >
@@ -99,6 +103,7 @@ export function FoodPicker({
         >
           <option value="">Todas as fontes</option>
           <option value="taco">TACO · Brasil</option>
+          <option value="ibge">IBGE · POF Brasil</option>
           <option value="usda">USDA · complemento</option>
           <option value="labels">Rótulos · suplementos e marcas</option>
           <option value="recipes">Minhas receitas</option>

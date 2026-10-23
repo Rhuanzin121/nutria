@@ -15,6 +15,22 @@ import {
   type Measure,
 } from "../model";
 afterEach(cleanup);
+function FoodOptionsHarness() {
+  const d = newDiet();
+  const food = foodSchema.parse({id:"base",name:"Arroz de teste",category:"Teste",source:"Teste",sourceUrl:"",page:null,unit:"g",referenceAmount:100,per100:{...emptyTotals(),kcal:100,protein:10}});
+  d.meals[0].items = [{id:"row",food,grams:100,substitutions:[{id:"option",food:{...food,id:"potato",name:"Batata de teste",per100:{...emptyTotals(),kcal:200,protein:20}},grams:50}]}];
+  const [meal,setMeal]=useState(d.meals[0]);
+  return <MealCard meal={meal} index={0} count={1} onChange={setMeal} onAdd={()=>{}} onReplace={()=>{}} onRemove={()=>{}} onDuplicate={()=>{}} onMove={()=>{}} onSource={()=>{}} />;
+}
+it("troca a opção de alimento e mantém a quantidade principal ao voltar", async () => {
+  const user=userEvent.setup();
+  render(<FoodOptionsHarness />);
+  await user.selectOptions(screen.getByLabelText("Opção de Arroz de teste"),"option");
+  expect(screen.getByRole("button",{name:/^Batata de teste$/})).toBeTruthy();
+  expect((screen.getByLabelText("Quantidade de Batata de teste em g") as HTMLInputElement).value).toBe("50");
+  await user.selectOptions(screen.getByLabelText("Opção de Arroz de teste"),"");
+  expect((screen.getByLabelText("Quantidade de Arroz de teste em g") as HTMLInputElement).value).toBe("100");
+});
 function NameHarness() {
   const [name, setName] = useState("Café");
   return (

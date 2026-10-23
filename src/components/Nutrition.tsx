@@ -147,7 +147,7 @@ export function Summary({
         <h3>Comparação com metas</h3>
         <button onClick={onGoals}>Editar</button>
       </div>
-      {(["kcal", "protein", "carbs", "fat", "fiber", "sodium"] as const).map(
+      {(["kcal", "protein", "carbs", "fat", "fiber"] as const).map(
         (key) => {
           const display = nutrientDisplay(totals, key, items);
           const { difference, percent } = goalDifference(
@@ -189,10 +189,6 @@ export function Summary({
           );
         },
       )}
-      <div className="extra-total">
-        <span>Gorduras saturadas</span>
-        <b>{format(totals.saturated)} g</b>
-      </div>
       <p className="muted text-small">
         Valores nutricionais não informados são considerados 0.
       </p>

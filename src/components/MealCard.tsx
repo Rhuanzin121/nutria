@@ -6,7 +6,7 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import { activeMealItems, updateMealItems, calculateItem, sumItems, type Meal, type Item } from "../model";
+import { activeMealItems, selectedItem, editSelectedItem, updateMealItems, calculateItem, sumItems, type Meal, type Item } from "../model";
 import { MacroLine } from "./Nutrition";
 import { EditableName } from "./EditableName";
 import { MealAlternatives } from "./MealAlternatives";
@@ -96,39 +96,34 @@ export function MealCard({
       <MealAlternatives meal={meal} onChange={onChange} />
       {items.length > 0 ? (
         <div className="item-list">
-          {items.map((item) => (
+          {items.map((item) => { const current = selectedItem(item); return (
             <div className="food-row" key={item.id}>
               <div className="food-name">
-                <button onClick={() => onSource(item)}>{item.food.name}</button>
+                <button onClick={() => onSource(current)}>{current.food.name}</button>
                 <small>
-                  {item.food.brand || item.food.source.split(" · ")[0]}
-                  {item.food.manual ? " · pessoal" : ""}
+                  {current.food.brand || current.food.source.split(" · ")[0]}
+                  {current.food.manual ? " · pessoal" : ""}
                 </small>
+                <button className="food-option-add" aria-label={`Adicionar substituição de ${current.food.name}`} disabled={(item.substitutions?.length ?? 0) >= 20} onClick={() => onReplace(item)}>
+                  <RefreshCw size={12} /> Adicionar substituição
+                </button>
               </div>
               <QuantityEditor
                 compact
-                food={item.food}
-                quantity={item.grams}
-                measure={item.measure}
+                food={current.food}
+                quantity={current.grams}
+                measure={current.measure}
                 onChange={(grams, measure) =>
                   onChange(updateMealItems(meal, items.map((i) =>
-                      i.id === item.id ? { ...i, grams, measure } : i)))
+                      i.id === item.id ? editSelectedItem(i, grams, measure) : i)))
                 }
               />
               <MacroLine totals={calculateItem(item)} />
               <div className="row-actions">
                 <button
-                  className="icon-button"
-                  title="Substituir alimento"
-                  aria-label={`Substituir ${item.food.name}`}
-                  onClick={() => onReplace(item)}
-                >
-                  <RefreshCw size={14} />
-                </button>
-                <button
                   className="icon-button danger"
                   title="Remover alimento"
-                  aria-label={`Remover ${item.food.name}`}
+                  aria-label={`Remover ${current.food.name}`}
                   onClick={() =>
                     onChange(updateMealItems(meal, items.filter((i) => i.id !== item.id)))
                   }
@@ -136,8 +131,18 @@ export function MealCard({
                   <Trash2 size={14} />
                 </button>
               </div>
+              <div className="food-substitutions">
+                {(item.substitutions?.length ?? 0) > 0 && <>
+                  <label>Opção do alimento<select aria-label={`Opção de ${item.food.name}`} value={item.activeSubstitutionId ?? ""}
+                    onChange={e => onChange(updateMealItems(meal, items.map(i => i.id === item.id ? {...i, activeSubstitutionId: e.target.value || null} : i)))}>
+                    <option value="">{item.food.name} (principal)</option>
+                    {item.substitutions?.map(s => <option key={s.id} value={s.id}>{s.food.name}</option>)}
+                  </select></label>
+                  {item.activeSubstitutionId && <button className="text-button" onClick={() => onChange(updateMealItems(meal, items.map(i => i.id === item.id ? {...i, activeSubstitutionId: null, substitutions: i.substitutions?.filter(s => s.id !== i.activeSubstitutionId)} : i)))}>Remover esta substituição</button>}
+                </>}
+              </div>
             </div>
-          ))}
+          );})}
         </div>
       ) : (
         <div className="meal-empty">

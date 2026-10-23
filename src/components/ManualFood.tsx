@@ -107,7 +107,7 @@ export function ManualFood({
             <option value="ml">mililitros (ml)</option>
           </select>
         </label>
-        {nutrients.map((key) => (
+        {nutrients.filter(k => k !== "sodium" && k !== "saturated").map((key) => (
           <label key={key}>
             {labels[key]} ({unit(key)})
             <input name={key} inputMode="decimal" placeholder="Desconhecido" />
