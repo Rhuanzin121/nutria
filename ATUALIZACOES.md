@@ -46,3 +46,10 @@ Os testes incluem regressão de digitação real de espaços, medidas caseiras n
 - Os percentuais de carboidratos, proteínas e gorduras ficam logo após os totais. Avisos de composição incompleta foram removidos.
 - Incluído pão de hambúrguer tradicional Pullman sem gergelim, porção/unidade de 50 g, rótulo comercial Carrefour (pacote 200 g / 4 unidades).
 - 65 testes: cálculo 40/40/20 com alimento sem dados, migração de backup e conversão por unidade do Pullman.
+
+## 23/10/2026 — opções por alimento e catálogo brasileiro ampliado
+
+- Cada alimento admite até 20 substituições salvas, com quantidade e medida próprias. Use “Adicionar substituição” no alimento e escolha em “Opção do alimento”. Só a opção selecionada entra no total; adicionar uma opção mantém a principal selecionada.
+- Troca, remoção de opção, backup, nuvem, duplicação e PDF preservam as alternativas. Não há equivalência automática entre porções.
+- Sódio e gordura saturada removidos do resumo, metas, cadastro manual e PDF; os dados de fontes e backups anteriores são mantidos.
+- Incorporados 1.971 registros alimento/preparo do IBGE/POF 2008–2009, Tabela 1 (2011), com filtro próprio, código e página da fonte. TACO e USDA continuam disponíveis.

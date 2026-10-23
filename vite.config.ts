@@ -10,7 +10,7 @@ export default defineConfig({
       output: {
         codeSplitting: {
           groups: [
-            { name: "nutrition-data", test: /taco\.json|usda\.json/ },
+            { name: "nutrition-data", test: /taco\.json|usda\.json|ibge\.json/ },
             { name: "supabase", test: /@supabase/ },
             { name: "vendor", test: /node_modules/ },
           ],

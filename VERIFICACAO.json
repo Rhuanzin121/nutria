@@ -1,13 +1,14 @@
 {
-  "resultado": "65 testes passaram; TypeScript e build de produção passaram",
+  "resultado": "69 testes passaram; TypeScript e build de produção passaram",
   "catalogo": {
     "TACO": 597,
     "USDA_Foundation": 363,
     "composicoes_calculadas": 1,
-    "TBCA": "importação de arquivo autorizado; base não incluída"
+    "TBCA": "importação de arquivo autorizado; base não incluída",
+    "IBGE_POF_2011": 1971
   },
-  "banco": "Migrações 001 e 002 executadas em PostgreSQL embarcado (PGlite); RLS testada com dois usuários artificiais",
-  "interface": "Regressões de espaços e medidas caseiras verificadas com Testing Library; busca de vegetais variados e campos novos conferidos no navegador; horários e medidas validados nas projeções SQL",
+  "banco": "Migrações 001–004 executadas em PostgreSQL embarcado (PGlite); RLS e projeção das substituições individuais testadas",
+  "interface": "Teste no navegador local: arroz TACO 100 g trocado por tapioca IBGE 50 g, total alterado de 124 para 168 kcal sem somar as opções; PDF exportado e renderizado para inspeção",
   "pendencias": [
     "Configurar projeto Supabase remoto, aplicar migração e preencher .env.local para sincronização entre dispositivos",
     "Validar Supabase Auth remoto com e-mail e credenciais próprias"
@@ -15,5 +16,5 @@
   "aviso_build": "Chunk de catálogo com catálogo com registros reais e medidas; build concluído; build concluído.",
   "atualizacao": "22/10/2026: alternativas, g/kg, arquivos com nome da dieta, PDF A4 paginado e 3 wheys com fontes",
   "pdf": "Amostra sintética de 5 páginas renderizada com Poppler; acentos e quebras conferidos",
-  "correcao": "23/10/2026: nutrientes ausentes como 0 por solicitação do usuário; percentuais restaurados; Pullman sem gergelim por unidade de 50 g"
+  "correcao": "23/10/2026: substituições por alimento com porções independentes; sódio e saturadas fora da interface e PDF; 1971 registros IBGE/POF com código e página"
 }

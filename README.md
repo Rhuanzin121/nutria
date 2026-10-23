@@ -161,3 +161,17 @@ O build pode emitir aviso de tamanho para o chunk do catálogo nutricional: ele 
 
 ## Substituições e exportação
 Use **Adicionar substituição** em cada refeição e escolha a opção calculada no seletor. O total inclui apenas a opção selecionada. Informe o peso em kg no resumo para ver macros em g/kg. **Exportar PDF** e **Baixar dieta (JSON)** usam o nome atual da dieta; o backup completo possui sufixo `backup`. O PDF é gerado localmente, sem serviço externo. Consulte `ROTULOS.md` para os suplementos e suas porções.
+
+### Substituições individuais e IBGE (23/10/2026)
+
+Em cada alimento, **Adicionar substituição** guarda outra opção e sua porção. O seletor escolhe qual será contabilizada, mantendo as demais fora do total e preservando suas quantidades. Até 20 opções por alimento. Alternativas de refeições continuam independentes. O PDF lista opções não selecionadas como fora do total.
+
+O resumo, as metas, o cadastro manual e o PDF mostram calorias, proteínas, carboidratos, gorduras e fibras. Sódio e saturadas ficam preservados nos dados para compatibilidade com backups.
+
+Catálogo brasileiro adicional: **IBGE, Pesquisa de Orçamentos Familiares 2008–2009, Tabelas de Composição Nutricional dos Alimentos Consumidos no Brasil (2011)**, Tabela 1: 1.971 combinações de alimento e preparo por 100 g de parte comestível (páginas PDF 36–96). Fonte oficial: https://biblioteca.ibge.gov.br/visualizacao/livros/liv50002.pdf . SHA256 do arquivo consultado: `ac4d965423793224cb28865c6bde4fb7cacdc84ef6f0ace0e5511a248bdd805a`.
+
+A tabela compila TACO/NDSR e outras referências e usa preparações padronizadas ou similares, inclusive referências cozidas para alguns códigos de preparo. Não se deve interpretar os nomes como análises independentes nem como rótulos atuais. Os critérios estão nas páginas PDF 26–33. Valores ausentes ficam nulos no JSON da fonte e seguem a preferência do aplicativo de contar como zero.
+
+Reimportação: `python scripts/import-ibge.py caminho/ibge.pdf src/ibge.json` (Python com pypdf e pdfplumber). O script valida as cinco colunas, IDs únicos e falha em linhas numéricas inesperadas. Publica somente a extração factual de composição, com atribuição; o PDF completo não é redistribuído.
+
+Para instalações Supabase existentes, aplicar também `supabase/migrations/202610230004_food_substitutions.sql`; o workspace JSON mantém as opções e a projeção de meal_items armazena as substituições separadamente.
