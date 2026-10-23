@@ -40,3 +40,9 @@ Os testes incluem regressão de digitação real de espaços, medidas caseiras n
 - A lista de dados ausentes identifica os alimentos de cada macro; ausência total aparece como Não informado.
 - g/kg também identifica valores parciais. Percentuais e comparação de metas não são apresentados como completos quando faltam dados. O cálculo canônico continua preservando valores desconhecidos.
 - 62 testes passaram, incluindo regressões de composição incompleta e ausência total.
+
+## 23/10/2026 - Valores vazios como zero e percentuais visíveis
+- Por solicitação expressa do usuário, os nutrientes ausentes dos alimentos são considerados 0 no catálogo, nos alimentos salvos, nas receitas e nos backups importados. Metas não definidas e peso opcional continuam vazios. Esta regra substitui as indicações de totais parciais das versões anteriores.
+- Os percentuais de carboidratos, proteínas e gorduras ficam logo após os totais. Avisos de composição incompleta foram removidos.
+- Incluído pão de hambúrguer tradicional Pullman sem gergelim, porção/unidade de 50 g, rótulo comercial Carrefour (pacote 200 g / 4 unidades).
+- 65 testes: cálculo 40/40/20 com alimento sem dados, migração de backup e conversão por unidade do Pullman.

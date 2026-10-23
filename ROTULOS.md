@@ -13,3 +13,7 @@ Consultadas em 22/10/2026. Os números se referem ao pó e à porção especific
 - Growth: tabela do [site oficial](https://www.gsuplementos.com.br/whey-protein-concentrado-1kg-growth-supplements-p985936), sabor Natural selecionado; 30 g = 2 dosadores.
 
 As medidas derivadas dividem a porção pelo número de dosadores/colheres indicado. Confirme com balança ou rótulo. Os registros mantêm referenceAmount igual à porção original para evitar arredondamento acumulado.
+
+## Pão de hambúrguer Pullman
+
+Tradicional sem gergelim, pacote 200 g com 4 unidades. Fonte: [rótulo comercial Carrefour](https://newsitefood.cloud.carrefour.com.br/pao-para-hamburguer-sem-gergelim-pullman-200g-5813646/p), consultado em 23/10/2026. Por 50 g (1 unidade): 133 kcal, 25 g carboidratos, 4,5 g proteínas, 1,7 g gorduras totais, 0,3 g saturadas, 1,4 g fibras e 233 mg sódio. Não misturar com outros tamanhos ou versões Artesano, brioche ou com gergelim.
